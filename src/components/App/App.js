@@ -1,5 +1,6 @@
 import React from 'react'
 import Authentication from '../../util/Authentication/Authentication'
+import { QR } from '../QR/QR'
 
 import './App.css'
 
@@ -13,8 +14,16 @@ export default class App extends React.Component{
         this.state={
             finishedLoading:false,
             theme:'light',
-            isVisible:true
+            isVisible:true,
+            isValidTime: false,
+            url: 'https://www.twitch.tv/sendainex',
+            time: null,
+            image: 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn.mobilesyrup.com%2Fwp-content%2Fuploads%2F2015%2F04%2FGlitch-Wizard-Gif-1.gif&f=1&nofb=1'
         }
+
+        this.timer = null;
+        this.timeCheck = this.timeCheck.bind(this);
+
     }
 
     contextUpdate(context, delta){
@@ -33,7 +42,39 @@ export default class App extends React.Component{
         })
     }
 
-    componentDidMount(){
+    timeCheck(time) {
+        console.log(time)
+
+        switch(time) {
+            case '20:09':
+                this.setState((_previousState) => ({
+                    isValidTime: true ,
+                    url:'https://www.twitch.tv/sendainex',
+                    time: time,
+                    image: 'https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fillusion.scene360.com%2Fwp-content%2Fuploads%2F2015%2F06%2Fkidmograph-01.gif&f=1&nofb=1'
+                }))
+                break;
+            case '20:11':
+                this.setState((_previousState) => ({
+                    isValidTime: true ,
+                    url:'https://www.twitch.tv/sendainex',
+                    time: time,
+                    image: 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn.mobilesyrup.com%2Fwp-content%2Fuploads%2F2015%2F04%2FGlitch-Wizard-Gif-1.gif&f=1&nofb=1'
+                }))
+                break;
+            default:
+                this.setState((_previousState) => ({
+                    isValidTime: false ,
+                    url:'https://www.twitch.tv/sendainex',
+                    time: time,
+                    image: 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn.mobilesyrup.com%2Fwp-content%2Fuploads%2F2015%2F04%2FGlitch-Wizard-Gif-1.gif&f=1&nofb=1'
+                }))
+        }
+    }
+
+    componentDidMount() {
+            this.timer = setInterval(() => this.timeCheck(`${new Date().getHours()}:${new Date().getMinutes() < 10? `0${new Date().getMinutes()}`: new Date().getMinutes()}`), 20000)
+
         if(this.twitch){
             this.twitch.onAuthorized((auth)=>{
                 this.Authentication.setToken(auth.token, auth.userId)
@@ -69,19 +110,15 @@ export default class App extends React.Component{
         if(this.twitch){
             this.twitch.unlisten('broadcast', ()=>console.log('successfully unlistened'))
         }
+        clearInterval(this.timer)
+        this.timer = null
     }
     
     render(){
-        if(this.state.finishedLoading && this.state.isVisible){
+        if(this.state.finishedLoading && this.state.isVisible && this.state.isValidTime){
             return (
                 <div className="App">
-                    <div className={this.state.theme === 'light' ? 'App-light' : 'App-dark'} >
-                        <p>Hello world!</p>
-                        <p>My token is: {this.Authentication.state.token}</p>
-                        <p>My opaque ID is {this.Authentication.getOpaqueId()}.</p>
-                        <div>{this.Authentication.isModerator() ? <p>I am currently a mod, and here's a special mod button <input value='mod button' type='button'/></p>  : 'I am currently not a mod.'}</div>
-                        <p>I have {this.Authentication.hasSharedId() ? `shared my ID, and my user_id is ${this.Authentication.getUserId()}` : 'not shared my ID'}.</p>
-                    </div>
+                    <QR url={this.state.url} image={this.state.image}></QR>
                 </div>
             )
         }else{
